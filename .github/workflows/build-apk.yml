@@ -1,12 +1,11 @@
-# Har baar code upload/push karne par GitHub free me APK bana deta hai,
-# aur use "Releases" me daal deta hai, jahan se phone pe seedha download hota hai.
-#
-# Seedha download link (apna username aur repo naam daalo):
-#   https://github.com/USERNAME/REPO/releases/latest/download/LabResultsReader.apk
+# Har push pe GitHub free me Flutter APK banata hai aur "Releases" me daal deta hai.
+# Seedha download link:
+#   https://github.com/digitalnova0101/lab-results-reader-android/releases/latest/download/LabResultsReader.apk
 name: Build Lab Results Reader APK
 
 on:
   push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -23,25 +22,56 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: subosito/flutter-action@v2
         with:
-          gradle-version: "8.10.2"
+          channel: stable
+          cache: true
+
+      - name: Create Android project files
+        run: |
+          flutter --version
+          flutter create --platforms=android --org com.labresultsreader --project-name app .
+          rm -rf test
+          python3 ci/patch_android.py
+
+      - name: Get packages
+        run: flutter pub get
+
+      - name: App icon
+        run: dart run flutter_launcher_icons
+
+      - name: Fixed signing key (so updates install over the old app)
+        run: mkdir -p ~/.android && cp keys/debug.keystore ~/.android/debug.keystore
+
+      - name: Check code
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings 2>&1 | tee analyze.log
 
       - name: Build APK
-        run: gradle assembleDebug --no-daemon
+        run: flutter build apk --release 2>&1 | tee build.log
 
       - name: Rename APK
-        run: cp app/build/outputs/apk/debug/app-debug.apk LabResultsReader.apk
+        run: cp build/app/outputs/flutter-apk/app-release.apk LabResultsReader.apk
 
       - name: Publish APK (direct download link)
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: apk-${{ github.run_number }}
-          name: Lab Results Reader APK (build ${{ github.run_number }})
+          tag_name: flutter-${{ github.run_number }}
+          name: Lab Results Reader (Flutter build ${{ github.run_number }})
           files: LabResultsReader.apk
           make_latest: true
 
-      - uses: actions/upload-artifact@v4
+      - name: Save error logs
+        if: failure()
+        run: touch analyze.log build.log
+
+      - name: Upload error logs
+        if: failure()
+        uses: softprops/action-gh-release@v2
         with:
-          name: LabResultsReader-APK
-          path: LabResultsReader.apk
+          tag_name: ci-log-${{ github.run_number }}
+          name: Build log ${{ github.run_number }}
+          prerelease: true
+          make_latest: false
+          files: |
+            analyze.log
+            build.log

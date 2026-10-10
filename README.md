@@ -1,13 +1,18 @@
-# Lab Results Reader — Android
+# Lab Results Reader — Flutter app
 
-Android app for **Lab Results Reader**: upload a photo or PDF of a lab report and get it explained in plain English.
-The app opens the web app (address in `app/src/main/res/values/strings.xml`) and supports photo upload, PDF upload and the camera.
+Upload a photo or PDF of a lab report and get it explained in plain English.
+Talks to the server at `https://labresultsreader.moezzadigital.com/api.php` (the Gemini key stays on the server).
 
 ## Download the APK
-Latest build (direct download):
 https://github.com/digitalnova0101/lab-results-reader-android/releases/latest/download/LabResultsReader.apk
 
-Every push builds a new APK automatically (see the **Actions** tab).
+Every push to `main` builds a new APK automatically (see the **Actions** tab).
 
-## Change the website address
-Edit `app_url` in `app/src/main/res/values/strings.xml` and commit. A new APK is built automatically.
+## Where things are
+- `lib/screens/home.dart` — upload, camera, PDF, loading steps
+- `lib/screens/result.dart` — summary ring, range bars, follow-up chat
+- `lib/screens/history.dart`, `lib/screens/profile.dart` — history and settings
+- `lib/api.dart` — server address
+- `lib/state.dart` — free report limit, saved data
+
+The old WebView version is kept in the `webview` branch.
