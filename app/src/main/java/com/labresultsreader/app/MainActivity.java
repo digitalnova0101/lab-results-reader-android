@@ -80,7 +80,7 @@ public class MainActivity extends Activity {
         s.setMediaPlaybackRequiresUserGesture(true);
         s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         s.setCacheMode(WebSettings.LOAD_DEFAULT);
-        s.setUserAgentString(s.getUserAgentString() + " LabResultsReaderAndroid/1.2");
+        s.setUserAgentString(s.getUserAgentString() + " LabResultsReaderAndroid/1.5");
 
         webView.setWebViewClient(new WebViewClient() {
             @Override

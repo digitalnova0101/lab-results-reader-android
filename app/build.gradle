@@ -10,8 +10,8 @@ android {
         applicationId "com.labresultsreader.app"   // Play Store par yahi app ki ID hogi
         minSdk 24
         targetSdk 35
-        versionCode 3
-        versionName "1.2"
+        versionCode 4
+        versionName "1.5"
     }
 
     // Fixed test key, so every new APK installs over the old one (no uninstall needed)
