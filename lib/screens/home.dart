@@ -99,17 +99,14 @@ class _HomeTabState extends State<HomeTab> {
   Future<void> _pickPdf() async {
     _err(null);
     try {
-      final r = await FilePicker.platform.pickFiles(
+      final List<PlatformFile> files = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf'],
-        allowMultiple: true,
-        withData: true,
       );
-      if (r == null) return;
-      for (final f in r.files) {
+      for (final f in files) {
         if (!_room()) break;
-        final b = f.bytes;
-        if (b == null) continue;
+        final Uint8List b = await f.readAsBytes();
+        if (b.isEmpty) continue;
         if (b.length > 12 * 1024 * 1024) {
           _err('${f.name} is too large (max 12 MB). Try photos of the pages instead.');
           continue;
