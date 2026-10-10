@@ -121,26 +121,28 @@ class ResultView extends StatelessWidget {
         }),
         const SizedBox(height: 10),
         ValueListenableBuilder<String?>(
-          valueListenable: speakingId,
-          builder: (context, id, _) {
-            final on = id == entry.id;
-            return GhostButton(
-              label: on ? 'Stop listening' : 'Listen to summary',
-              icon: on ? Icons.stop_rounded : Icons.volume_up_rounded,
-              expand: true,
-              onPressed: () async {
-                if (on) {
-                  await stopSpeaking();
-                  return;
-                }
-                final ok = await speak(entry.id, entry.lang, spokenText(r));
-                if (!ok && context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content: Text('Your phone has no voice for ${entry.lang}. You can add one in your phone\'s text-to-speech settings.')));
-                }
-              },
-            );
-          },
+          valueListenable: loadingId,
+          builder: (context, loading, _) => ValueListenableBuilder<String?>(
+            valueListenable: speakingId,
+            builder: (context, playing, _) {
+              final isLoading = loading == entry.id, isPlaying = playing == entry.id;
+              return GhostButton(
+                label: isLoading ? 'Preparing voice… (tap to cancel)' : (isPlaying ? 'Stop listening' : 'Listen to summary'),
+                icon: isPlaying || isLoading ? Icons.stop_rounded : Icons.volume_up_rounded,
+                expand: true,
+                onPressed: () async {
+                  if (isPlaying || isLoading) {
+                    await stopSpeaking();
+                    return;
+                  }
+                  final err = await speak(entry.id, spokenText(r));
+                  if (err != null && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+                  }
+                },
+              );
+            },
+          ),
         ),
         const SizedBox(height: 6),
         const Center(child: Text('Tip: tap any test name to learn what it means', style: TextStyle(color: C.muted, fontSize: 12.5))),
