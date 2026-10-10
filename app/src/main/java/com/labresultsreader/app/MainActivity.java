@@ -79,7 +79,8 @@ public class MainActivity extends Activity {
         s.setAllowContentAccess(true);
         s.setMediaPlaybackRequiresUserGesture(true);
         s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
-        s.setUserAgentString(s.getUserAgentString() + " LabResultsReaderAndroid/1.0");
+        s.setCacheMode(WebSettings.LOAD_DEFAULT);
+        s.setUserAgentString(s.getUserAgentString() + " LabResultsReaderAndroid/1.2");
 
         webView.setWebViewClient(new WebViewClient() {
             @Override
@@ -127,8 +128,13 @@ public class MainActivity extends Activity {
             }
         });
 
-        if (savedInstanceState != null) webView.restoreState(savedInstanceState);
-        else webView.loadUrl(appUrl);
+        if (savedInstanceState != null) {
+            webView.restoreState(savedInstanceState);
+        } else {
+            // Always load the latest website version (no stale copy from an old visit)
+            webView.clearCache(true);
+            webView.loadUrl(appUrl);
+        }
     }
 
     private Intent cameraIntent() {
