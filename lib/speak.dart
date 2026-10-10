@@ -32,8 +32,8 @@ Future<String?> speak(String id, String text) async {
       final res = await Api.post({'action': 'speak', 'text': text});
       audio = base64Decode('${res['audio']}');
       _cache[key] = audio;
+      if (loadingId.value != id) return null; // user pressed stop while loading
     }
-    if (loadingId.value != id) return null; // user pressed stop while loading
     loadingId.value = null;
     speakingId.value = id;
     await _player.play(BytesSource(audio, mimeType: 'audio/wav'));
