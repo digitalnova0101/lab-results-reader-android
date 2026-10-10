@@ -174,7 +174,7 @@ class ResultView extends StatelessWidget {
       if (isSample) ...[const SizedBox(height: 14), PrimaryButton(label: 'Upload your own report', onPressed: onNew)],
       const SizedBox(height: 16),
       const Text(
-        'For educational use only. This is not medical advice or a diagnosis. Always confirm results with your original report and your doctor. If this is an emergency, call 911.',
+        'For educational use only. This is not medical advice or a diagnosis. Always confirm results with your original report and your doctor. In an emergency, contact your local emergency services right away.',
         textAlign: TextAlign.center,
         style: TextStyle(color: C.muted, fontSize: 12.5, height: 1.5),
       ),

@@ -1,7 +1,7 @@
 name: app
 description: Lab Results Reader — upload a lab report and get it explained in plain English.
 publish_to: none
-version: 2.0.0+20
+version: 2.1.0+21
 
 environment:
   sdk: ">=3.4.0 <4.0.0"

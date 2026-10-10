@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const int freeLimit = 3; // free reports per phone (set 999 while testing)
-const String appVersion = '2.0';
+const String appVersion = '2.1';
 
 const List<List<String>> langs = [
   ['English', 'English'],
@@ -78,6 +78,7 @@ class AppState extends ChangeNotifier {
 
   SharedPreferences? _p;
   bool introSeen = false;
+  bool langChosen = false;
   bool consent = false;
   bool saveHistory = false;
   String lang = 'English';
@@ -96,6 +97,7 @@ class AppState extends ChangeNotifier {
     try {
       final s = jsonDecode(_p!.getString('settings') ?? '{}') as Map<String, dynamic>;
       introSeen = s['introSeen'] == true;
+      langChosen = s['langChosen'] == true;
       consent = s['consent'] == true;
       saveHistory = s['saveHistory'] == true;
       lang = '${s['lang'] ?? 'English'}';
@@ -120,6 +122,7 @@ class AppState extends ChangeNotifier {
         'settings',
         jsonEncode({
           'introSeen': introSeen,
+          'langChosen': langChosen,
           'consent': consent,
           'saveHistory': saveHistory,
           'lang': lang,
@@ -170,6 +173,7 @@ class AppState extends ChangeNotifier {
   Future<void> wipe() async {
     await _p?.clear();
     introSeen = false;
+    langChosen = false;
     consent = false;
     saveHistory = false;
     lang = 'English';

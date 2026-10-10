@@ -239,7 +239,7 @@ class _HomeTabState extends State<HomeTab> {
       const SizedBox(height: 14),
       Text(_greeting(), style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w800, letterSpacing: -0.8, height: 1.1)),
       const SizedBox(height: 4),
-      const Text("Upload your lab results and we'll explain them in plain English.", style: TextStyle(color: C.muted, fontSize: 16, height: 1.45)),
+      const Text("Upload your lab results and we'll explain them in simple words.", style: TextStyle(color: C.muted, fontSize: 16, height: 1.45)),
       const SizedBox(height: 18),
       if (last != null) ...[_lastCard(last), const SizedBox(height: 16)],
       Container(
@@ -277,10 +277,6 @@ class _HomeTabState extends State<HomeTab> {
             Container(width: 7, height: 7, decoration: const BoxDecoration(color: C.accent, shape: BoxShape.circle)),
             const SizedBox(width: 6),
             const Expanded(child: Text('For educational use only · not a diagnosis', style: TextStyle(color: C.muted, fontSize: 13))),
-            GestureDetector(
-              onTap: () => s.openEntry(sampleEntry()),
-              child: const Text('See a sample', style: TextStyle(color: C.accent, fontWeight: FontWeight.w600, decoration: TextDecoration.underline)),
-            ),
           ]),
         ]),
       ),

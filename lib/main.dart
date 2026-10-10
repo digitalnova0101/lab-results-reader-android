@@ -34,6 +34,7 @@ class LabResultsReaderApp extends StatelessWidget {
         builder: (context, _) {
           final s = AppState.I;
           if (!s.introSeen) return const IntroScreen();
+          if (!s.langChosen) return const LanguageScreen();
           if (!s.consent) return const ConsentScreen();
           return const MainShell();
         },
@@ -57,7 +58,7 @@ class _IntroScreenState extends State<IntroScreen> {
     (Icons.upload_rounded, 'Upload your lab results',
         'Snap a photo or add a PDF of your blood work, urinalysis, or imaging report.'),
     (Icons.fact_check_outlined, 'Get a clear explanation',
-        "See what's in range, what's out of range, and what it means for you, in plain English."),
+        "See what's in range, what's out of range, and what it means for you, in simple words."),
     (Icons.forum_outlined, 'Be ready for your appointment',
         "Get questions to ask your doctor, and ask anything you're unsure about."),
   ];
@@ -132,6 +133,79 @@ class _IntroScreenState extends State<IntroScreen> {
             const SizedBox(height: 8),
           ]),
         ),
+      ),
+    );
+  }
+}
+
+/* ---------------- Language step ---------------- */
+
+class LanguageScreen extends StatefulWidget {
+  const LanguageScreen({super.key});
+  @override
+  State<LanguageScreen> createState() => _LanguageScreenState();
+}
+
+class _LanguageScreenState extends State<LanguageScreen> {
+  String chosen = AppState.I.lang;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Column(children: [
+          Expanded(
+            child: ListView(padding: const EdgeInsets.fromLTRB(20, 0, 20, 12), children: [
+              const AppHeader(),
+              const SizedBox(height: 18),
+              const Text('Choose your language', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800, letterSpacing: -0.6, height: 1.1)),
+              const SizedBox(height: 6),
+              const Text('Your reports will be explained in this language. You can change it anytime in Profile.',
+                  style: TextStyle(color: C.muted, fontSize: 16, height: 1.45)),
+              const SizedBox(height: 18),
+              Container(
+                decoration: cardDeco(),
+                clipBehavior: Clip.antiAlias,
+                child: Column(children: [
+                  for (var i = 0; i < langs.length; i++) ...[
+                    if (i > 0) const Divider(height: 1, color: C.line, indent: 18, endIndent: 18),
+                    InkWell(
+                      onTap: () => setState(() => chosen = langs[i][0]),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                        child: Row(children: [
+                          Expanded(
+                            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                              Text(langs[i][1], style: const TextStyle(fontSize: 16.5, fontWeight: FontWeight.w600)),
+                              if (langs[i][1] != langs[i][0])
+                                Text(langs[i][0], style: const TextStyle(color: C.muted, fontSize: 13)),
+                            ]),
+                          ),
+                          Icon(
+                            chosen == langs[i][0] ? Icons.check_circle_rounded : Icons.circle_outlined,
+                            color: chosen == langs[i][0] ? C.accent : C.line,
+                          ),
+                        ]),
+                      ),
+                    ),
+                  ],
+                ]),
+              ),
+            ]),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+            child: PrimaryButton(
+              label: 'Continue',
+              onPressed: () {
+                final s = AppState.I;
+                s.lang = chosen;
+                s.langChosen = true;
+                s.save();
+              },
+            ),
+          ),
+        ]),
       ),
     );
   }

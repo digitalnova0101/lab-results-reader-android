@@ -2,32 +2,59 @@ import 'package:flutter/material.dart';
 
 import '../theme.dart';
 
+const String legalUpdated = 'October 10, 2026';
+
 const _legal = {
   'privacy': (
     'Privacy Policy',
     [
+      ('Who we are',
+          'Lab Results Reader ("the app", "we", "us") is operated by Moezza Digital. If you have any question about your privacy, contact us at privacy@moezzadigital.com.'),
       ('What we collect',
-          'The report photos or PDF pages you add, and the explanation we create from them. If Save to history is on, the explanation text, the date, and the family profile it belongs to are kept on your phone.'),
-      ("What we don't keep",
-          'Your photos and PDFs. They are sent once to create the explanation and are not stored. We ask the AI to leave out names, dates of birth, and ID numbers.'),
-      ('How it\'s protected', 'Data is encrypted in transit. Your history stays on your phone and is never shown to other users.'),
-      ('What we never do', 'We never sell your health data and never use it for advertising.'),
-      ('Your choices',
-          'Turn history off anytime, delete single reports, or delete all your data in Profile. EU/UK users can request a copy or erasure of their data under GDPR. US users in states with health-privacy laws (such as Washington\'s My Health My Data Act) have similar rights.'),
-      ('Contact', 'privacy@moezzadigital.com'),
+          'We collect only what is needed to explain your report: the photos or PDF pages you choose to upload, the questions you ask in the follow-up chat, and basic technical information such as your IP address and the time of each request. You do not need an account, and we do not ask for your name, email address, or phone number.'),
+      ('How we use it',
+          'We use your uploads and questions only to create your explanation and answer your questions. We use technical information only to keep the service secure and to prevent abuse. We never sell your data, never use it for advertising, and never use it to build a profile about you.'),
+      ('AI processing',
+          'To create your explanation, your uploads are sent over an encrypted connection to our server and then to Google\'s Gemini AI service, which processes them under Google\'s API terms. We share your uploads only for this purpose. We instruct the AI not to include names, dates of birth, ID numbers, or addresses in your explanation.'),
+      ('What we keep, and for how long',
+          'Your photos and PDFs are not stored on our servers after your explanation is created. To prevent abuse, we keep a scrambled (hashed) form of your IP address and the times of your requests for a short period. If you turn on "Save to history", your explanations are saved only on your own device. You can delete them anytime in Profile, and uninstalling the app removes them.'),
+      ('Health information',
+          'Lab reports contain sensitive health information. We process it only with the explicit consent you give when you first open the app. You can withdraw consent at any time by deleting your data in Profile and no longer using the app.'),
+      ('Security',
+          'All data is sent over encrypted (HTTPS) connections. Access to our server and to the AI service is restricted and protected.'),
+      ('Your rights',
+          'Depending on where you live, you may have the right to access, correct, delete, or object to the processing of your personal data, and to complain to your local data protection authority. These rights exist under laws such as the GDPR (EU and UK), CCPA/CPRA (California), LGPD (Brazil), PIPEDA (Canada), the Privacy Act (Australia), and the DPDP Act (India). Because we do not keep your reports, most of your data stays on your device and under your control. For any request, email privacy@moezzadigital.com and we will reply within 30 days.'),
+      ('International transfers',
+          'Our server and the AI service may process your data in countries other than your own, including the United States. Where required, we rely on appropriate safeguards for these transfers.'),
+      ('Children',
+          'The app is not intended for children under 13. Anyone under 18 should use it with a parent or guardian.'),
+      ('Changes to this policy',
+          'If we change this policy, we will update the date below and tell you in the app when the changes are important.'),
     ]
   ),
   'terms': (
     'Terms of Use',
     [
-      ('Education only',
-          'Lab Results Reader explains medical reports in plain language for general education. It is not a medical device, does not diagnose or treat any condition, and is not a substitute for professional medical advice.'),
-      ('Talk to your doctor',
-          'Always ask your doctor or another qualified provider about your results before making any health decision. Never ignore or delay medical advice because of something you read in this app.'),
-      ('Emergencies', 'If you think you may have a medical emergency, call 911 (US) or your local emergency number right away.'),
-      ('Accuracy', 'AI can misread photos or make mistakes. Check every value against your original report.'),
-      ('Subscriptions', 'Paid plans renew automatically until canceled. Cancel anytime in your Google Play account settings.'),
-      ('Age', 'You must be 18 or older, or use the app with a parent or guardian.'),
+      ('Agreement', 'By using Lab Results Reader, you agree to these Terms. If you do not agree, please do not use the app.'),
+      ('Educational use only',
+          'The app explains medical reports in simple language for general education. It is not a medical device. It does not diagnose, treat, cure, or prevent any condition, and it is not a substitute for advice from a doctor or other qualified healthcare professional.'),
+      ('Always talk to your doctor',
+          'Discuss your results with a qualified healthcare professional before making any decision about your health. Never ignore professional medical advice or delay seeking it because of something you read in the app.'),
+      ('Emergencies',
+          'Do not use the app in an emergency. If you think you may have a medical emergency, contact your local emergency services or go to the nearest emergency department right away.'),
+      ('Accuracy',
+          'Explanations are created by artificial intelligence. AI can misread a photo, miss information, or make mistakes. Always check every value against your original report. The app is provided "as is", without any guarantee that explanations are complete or accurate.'),
+      ('Your responsibilities',
+          'Only upload reports that belong to you, or that you have permission to share (for example, as a parent, guardian, or caregiver). Do not misuse the app, try to disrupt it, or copy or reverse engineer it.'),
+      ('Free and paid plans',
+          'The free plan includes a limited number of reports. Paid plans, when available, are billed through Google Play or the App Store, renew automatically, and can be canceled anytime in your store account settings. Prices are shown in your local currency before you pay. Refunds follow the store\'s refund policy.'),
+      ('Limitation of liability',
+          'To the fullest extent allowed by law, we are not responsible for any decision you make, or any loss or harm, based on information shown in the app. Nothing in these Terms limits any rights you have under consumer protection laws that cannot be changed by agreement.'),
+      ('Changes and ending',
+          'We may update the app and these Terms from time to time. We may stop providing the app, or suspend access for misuse. You can stop using the app at any time.'),
+      ('Governing law',
+          'These Terms are governed by the laws of India. This does not take away any protection given to you by the mandatory laws of the country where you live.'),
+      ('Contact', 'Questions about these Terms: support@moezzadigital.com'),
     ]
   ),
 };
@@ -37,12 +64,8 @@ void openLegal(BuildContext context, String kind) {
   Navigator.of(context).push(MaterialPageRoute(
     builder: (_) => Scaffold(
       appBar: AppBar(title: Text(l.$1), backgroundColor: C.bg, surfaceTintColor: C.bg),
-      body: ListView(padding: const EdgeInsets.fromLTRB(20, 8, 20, 32), children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(color: C.warnSoft, borderRadius: BorderRadius.circular(10)),
-          child: const Text('Draft — have a lawyer review before launch.', style: TextStyle(color: C.warn, fontSize: 13)),
-        ),
+      body: ListView(padding: const EdgeInsets.fromLTRB(20, 4, 20, 32), children: [
+        const Text('Last updated: $legalUpdated', style: TextStyle(color: C.muted, fontSize: 13)),
         for (final s in l.$2) ...[
           const SizedBox(height: 18),
           Text(s.$1, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
@@ -117,7 +140,7 @@ class _PlansScreenState extends State<PlansScreen> {
       body: ListView(padding: const EdgeInsets.fromLTRB(20, 0, 20, 32), children: [
         Text(widget.title, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800, letterSpacing: -0.6)),
         const SizedBox(height: 4),
-        const Text('Cancel anytime. Prices in USD.', style: TextStyle(color: C.muted)),
+        const Text('Cancel anytime. You will see the price in your local currency before you pay.', style: TextStyle(color: C.muted)),
         const SizedBox(height: 18),
         _plan('plus', 'Plus', '\$4.99', ['Unlimited reports', 'Follow-up questions', '2 family profiles'], best: true),
         const SizedBox(height: 12),
