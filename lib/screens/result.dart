@@ -5,7 +5,9 @@ import 'package:flutter/services.dart';
 
 import '../api.dart';
 import '../state.dart';
+import '../speak.dart';
 import '../theme.dart';
+import 'learn.dart';
 
 const _order = {'bad': 0, 'warn': 1, 'ok': 2};
 
@@ -77,12 +79,15 @@ class ResultView extends StatelessWidget {
     final questions = (r['questions'] as List? ?? []).map((e) => '$e').toList();
     final s = AppState.I;
 
-    return ListView(padding: const EdgeInsets.fromLTRB(20, 4, 20, 28), children: [
+    return ListView(key: ValueKey('result-${entry.id}'), padding: const EdgeInsets.fromLTRB(20, 4, 20, 28), children: [
       const AppHeader(),
       const SizedBox(height: 6),
       Row(children: [
         TextButton.icon(
-          onPressed: onNew,
+          onPressed: () {
+            stopSpeaking();
+            onNew();
+          },
           style: TextButton.styleFrom(padding: EdgeInsets.zero, foregroundColor: C.accent),
           icon: const Icon(Icons.arrow_back_rounded, size: 20),
           label: const Text('New report', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
@@ -110,7 +115,35 @@ class ResultView extends StatelessWidget {
           style: const TextStyle(color: C.muted)),
       const SizedBox(height: 14),
       if (!isSample) ...[
-        PrimaryButton(label: '+ Check a new report', onPressed: onNew),
+        PrimaryButton(label: '+ Check a new report', onPressed: () {
+          stopSpeaking();
+          onNew();
+        }),
+        const SizedBox(height: 10),
+        ValueListenableBuilder<String?>(
+          valueListenable: speakingId,
+          builder: (context, id, _) {
+            final on = id == entry.id;
+            return GhostButton(
+              label: on ? 'Stop listening' : 'Listen to summary',
+              icon: on ? Icons.stop_rounded : Icons.volume_up_rounded,
+              expand: true,
+              onPressed: () async {
+                if (on) {
+                  await stopSpeaking();
+                  return;
+                }
+                final ok = await speak(entry.id, entry.lang, spokenText(r));
+                if (!ok && context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text('Your phone has no voice for ${entry.lang}. You can add one in your phone\'s text-to-speech settings.')));
+                }
+              },
+            );
+          },
+        ),
+        const SizedBox(height: 6),
+        const Center(child: Text('Tip: tap any test name to learn what it means', style: TextStyle(color: C.muted, fontSize: 12.5))),
         const SizedBox(height: 14),
       ],
       // Summary card with ring
@@ -150,7 +183,7 @@ class ResultView extends StatelessWidget {
           ]),
         ),
       ],
-      for (final rep in reports) ...[const SizedBox(height: 14), _ReportCard(rep: Map<String, dynamic>.from(rep))],
+      for (final rep in reports) ...[const SizedBox(height: 14), _ReportCard(rep: Map<String, dynamic>.from(rep), lang: entry.lang)],
       if (questions.isNotEmpty) ...[
         const SizedBox(height: 14),
         Container(
@@ -263,8 +296,9 @@ class _DonutPainter extends CustomPainter {
 /* ---------- report card ---------- */
 
 class _ReportCard extends StatefulWidget {
-  const _ReportCard({required this.rep});
+  const _ReportCard({required this.rep, required this.lang});
   final Map<String, dynamic> rep;
+  final String lang;
   @override
   State<_ReportCard> createState() => _ReportCardState();
 }
@@ -304,7 +338,7 @@ class _ReportCardState extends State<_ReportCard> {
             Chip2(st),
           ]),
         ),
-        for (final i in flagged) _ItemRow(item: i),
+        for (final i in flagged) _ItemRow(item: i, lang: widget.lang),
         if (normal.isNotEmpty) ...[
           InkWell(
             onTap: () => setState(() => showNormal = !showNormal),
@@ -320,7 +354,7 @@ class _ReportCardState extends State<_ReportCard> {
               ]),
             ),
           ),
-          if (showNormal) for (final i in normal) _ItemRow(item: i),
+          if (showNormal) for (final i in normal) _ItemRow(item: i, lang: widget.lang),
         ],
       ]),
     );
@@ -328,8 +362,9 @@ class _ReportCardState extends State<_ReportCard> {
 }
 
 class _ItemRow extends StatelessWidget {
-  const _ItemRow({required this.item});
+  const _ItemRow({required this.item, required this.lang});
   final Map<String, dynamic> item;
+  final String lang;
 
   bool _isLong(String v) {
     final stripped = v.replaceAll(RegExp(r'(mg|dl|mmol|mm|cm|ml|ng|pg|iu|miu|meq|u/l|g/dl|k/µl|µl|hpf|%)', caseSensitive: false), '');
@@ -340,7 +375,18 @@ class _ItemRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final st = norm(item['status']);
     final value = '${item['value'] ?? '—'}';
-    final name = Text('${item['name'] ?? ''}', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15.5, height: 1.35));
+    final testName = '${item['name'] ?? ''}';
+    final name = InkWell(
+      borderRadius: BorderRadius.circular(6),
+      onTap: testName.isEmpty ? null : () => showLearnSheet(context, testName, lang),
+      child: Text.rich(TextSpan(children: [
+        TextSpan(text: testName, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15.5, height: 1.35)),
+        const WidgetSpan(
+          alignment: PlaceholderAlignment.middle,
+          child: Padding(padding: EdgeInsets.only(left: 5), child: Icon(Icons.info_outline_rounded, size: 16, color: C.accent)),
+        ),
+      ])),
+    );
     final valStyle = TextStyle(color: st == 'ok' ? C.ink : C.of(st), fontWeight: FontWeight.w800, fontSize: 16, height: 1.35);
     final long = _isLong(value);
     final bar = _RangeBar.maybe(item);

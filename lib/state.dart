@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const int freeLimit = 3; // free reports per phone (set 999 while testing)
-const String appVersion = '2.1';
+const String appVersion = '2.2';
 
 const List<List<String>> langs = [
   ['English', 'English'],

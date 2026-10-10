@@ -234,7 +234,7 @@ class _HomeTabState extends State<HomeTab> {
 
   Widget _upload() {
     final last = s.history.isNotEmpty ? s.history.first : null;
-    return ListView(padding: const EdgeInsets.fromLTRB(20, 4, 20, 28), children: [
+    return ListView(key: const ValueKey('upload'), padding: const EdgeInsets.fromLTRB(20, 4, 20, 28), children: [
       const AppHeader(),
       const SizedBox(height: 14),
       Text(_greeting(), style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w800, letterSpacing: -0.8, height: 1.1)),
@@ -452,7 +452,7 @@ class _HomeTabState extends State<HomeTab> {
 
   Widget _progress() {
     const labels = ['Uploading your report', 'Reading each result', 'Writing your summary'];
-    return ListView(padding: const EdgeInsets.fromLTRB(20, 4, 20, 28), children: [
+    return ListView(key: const ValueKey('progress'), padding: const EdgeInsets.fromLTRB(20, 4, 20, 28), children: [
       const AppHeader(),
       const SizedBox(height: 16),
       Container(

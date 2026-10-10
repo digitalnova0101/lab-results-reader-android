@@ -6,6 +6,7 @@ class C {
   static const bg = Color(0xFFF2F5F4);
   static const surface = Color(0xFFFFFFFF);
   static const ink = Color(0xFF0F1F1C);
+  static const ink2 = Color(0xFF24332F);
   static const muted = Color(0xFF5E6E6A);
   static const line = Color(0xFFE1E8E6);
   static const accent = Color(0xFF0B6E5C);

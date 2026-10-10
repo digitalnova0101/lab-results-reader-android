@@ -5,6 +5,7 @@ import 'screens/history.dart';
 import 'screens/home.dart';
 import 'screens/legal.dart';
 import 'screens/profile.dart';
+import 'speak.dart';
 import 'state.dart';
 import 'theme.dart';
 
@@ -314,6 +315,23 @@ class MainShell extends StatelessWidget {
 
   Widget _shell(BuildContext context) {
     final s = AppState.I;
+    // Phone back button: History/Profile -> Home, result -> upload screen, then exit.
+    return PopScope(
+      canPop: s.tab == 0 && s.current == null,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        stopSpeaking();
+        if (s.tab != 0) {
+          s.setTab(0);
+        } else if (s.current != null) {
+          s.openEntry(null);
+        }
+      },
+      child: _scaffold(s),
+    );
+  }
+
+  Widget _scaffold(AppState s) {
     return Scaffold(
       body: SafeArea(
         bottom: false,
