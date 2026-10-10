@@ -47,17 +47,23 @@ jobs:
         run: flutter analyze --no-fatal-infos --no-fatal-warnings 2>&1 | tee analyze.log
 
       - name: Build APK
-        run: flutter build apk --release 2>&1 | tee build.log
-
-      - name: Rename APK
-        run: cp build/app/outputs/flutter-apk/app-release.apk LabResultsReader.apk
+        shell: bash
+        run: |
+          set -o pipefail
+          flutter build apk --release 2>&1 | tee build.log
+          cp build/app/outputs/flutter-apk/app-release.apk LabResultsReader.apk
+          flutter build apk --release --split-per-abi 2>&1 | tee -a build.log
+          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk LabResultsReader-arm64.apk
+          ls -la *.apk
 
       - name: Publish APK (direct download link)
         uses: softprops/action-gh-release@v2
         with:
           tag_name: flutter-${{ github.run_number }}
           name: Lab Results Reader (Flutter build ${{ github.run_number }})
-          files: LabResultsReader.apk
+          files: |
+            LabResultsReader.apk
+            LabResultsReader-arm64.apk
           make_latest: true
 
       - name: Save error logs
