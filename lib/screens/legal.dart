@@ -5,7 +5,7 @@ import '../billing.dart';
 import '../state.dart';
 import '../theme.dart';
 
-const String legalUpdated = 'October 10, 2026';
+const String legalUpdated = 'October 11, 2026';
 
 const _legal = {
   'privacy': (
@@ -14,13 +14,15 @@ const _legal = {
       ('Who we are',
           'Lab Results Reader ("the app", "we", "us") is operated by Moezza Digital. If you have any question about your privacy, contact us at privacy@moezzadigital.com.'),
       ('What we collect',
-          'We collect only what is needed to explain your report: the photos or PDF pages you choose to upload, the questions you ask in the follow-up chat, and basic technical information such as your IP address, the time of each request, and an anonymous app ID for this phone (used only to count free reports and to keep your paid plan active). If you subscribe, Google Play shares a purchase token with us so we can confirm your plan; we never see your card details. You do not need an account, and we do not ask for your name, email address, or phone number.'),
+          'We collect only what is needed to explain your report: the photos or PDF pages you choose to upload, the questions you ask in the follow-up chat, and basic technical information such as your IP address, the time of each request, and an anonymous app ID for this phone (used only to count free reports and to keep your paid plan active). If you subscribe, Google Play shares a purchase token with us so we can confirm your plan; we never see your card details. You do not need an account. If you choose to sign in with Google, we receive your name, email address, and profile picture from Google to create your account.'),
       ('How we use it',
           'We use your uploads and questions only to create your explanation and answer your questions. We use technical information only to keep the service secure and to prevent abuse. We never sell your data, never use it for advertising, and never use it to build a profile about you.'),
       ('AI processing',
           'To create your explanation, your uploads are sent over an encrypted connection to our server and then to Google\'s Gemini AI service, which processes them under Google\'s API terms. We share your uploads only for this purpose. We instruct the AI not to include names, dates of birth, ID numbers, or addresses in your explanation.'),
       ('What we keep, and for how long',
-          'Your photos and PDFs are not stored on our servers after your explanation is created. To prevent abuse, we keep a scrambled (hashed) form of your IP address and the times of your requests for a short period. If you turn on "Save to history", your explanations are saved only on your own device. You can delete them anytime in Profile, and uninstalling the app removes them.'),
+          'Your photos and PDFs are not stored on our servers after your explanation is created. To prevent abuse, we keep a scrambled (hashed) form of your IP address and the times of your requests for a short period. If you turn on "Save to history", your explanations are saved only on your own device (or in your account, if you sign in). You can delete them anytime in Profile, and uninstalling the app removes them.'),
+      ('Optional account (Sign in with Google)',
+          'Signing in is optional. If you sign in, we store your account details (name, email address, profile picture), your plan, and the report summaries you choose to save, so they are available on every device where you sign in. Photos and PDFs are never stored. You can sign out at any time, and you can permanently delete your account and everything saved in it from Profile. Deleting your account does not cancel a Google Play subscription; cancel it in Google Play.'),
       ('Health information',
           'Lab reports contain sensitive health information. We process it only with the explicit consent you give when you first open the app. You can withdraw consent at any time by deleting your data in Profile and no longer using the app.'),
       ('Security',

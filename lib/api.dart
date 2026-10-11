@@ -26,6 +26,9 @@ const Map<String, String> errorCopy = {
   'limit_reached': "You've used all your free reports. Choose a plan or redeem a code to keep going.",
   'bad_code': "That code isn't valid.",
   'purchase_invalid': "We couldn't confirm this purchase with Google Play.",
+  'signin_off': "Sign in with Google isn't available yet.",
+  'signin_failed': "Google sign-in couldn't be confirmed. Please try again.",
+  'signed_out': 'You were signed out. Please sign in again.',
 };
 
 String errorText(ApiError e) =>
@@ -34,6 +37,9 @@ String errorText(ApiError e) =>
 class Api {
   /// Anonymous id for this phone, so the server can count free reports (set at startup).
   static String device = '';
+
+  /// Session token when signed in with Google ('' when signed out).
+  static String auth = '';
   static http.Client? _client;
   static bool _cancelled = false;
 
@@ -48,7 +54,7 @@ class Api {
     _client = c;
     try {
       final res = await c
-          .post(Uri.parse(apiUrl), headers: {'Content-Type': 'application/json'}, body: jsonEncode({...body, 'device': device, 'platform': 'android'}))
+          .post(Uri.parse(apiUrl), headers: {'Content-Type': 'application/json'}, body: jsonEncode({'device': device, 'platform': 'android', if (auth.isNotEmpty) 'auth': auth, ...body}))
           .timeout(const Duration(seconds: 200));
       Map<String, dynamic>? data;
       try {

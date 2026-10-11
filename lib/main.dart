@@ -20,7 +20,7 @@ Future<void> main() async {
   ));
   await AppState.I.load();
   runApp(const LabResultsReaderApp());
-  AppState.I.syncStatus(); // plan + free reports left, from the server
+  AppState.I.syncStatus().then((_) => AppState.I.syncHistory()); // plan, free reports left, synced summaries
   Billing.I.init(); // finishes any Google Play purchase that was still pending
 }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../account.dart';
 import '../state.dart';
 import '../theme.dart';
 import 'home.dart' show addProfileDialog;
@@ -109,6 +110,97 @@ class ProfileTab extends StatelessWidget {
     );
   }
 
+  Widget _accountGroup(BuildContext context, AppState s) {
+    if (!s.signedIn) {
+      return _group([
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Row(children: [
+              Text('Sign in with Google', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15.5)),
+              SizedBox(width: 6),
+              Text('(optional)', style: TextStyle(color: C.muted, fontSize: 13)),
+            ]),
+            const SizedBox(height: 2),
+            const Text('Keep your plan and saved summaries on all your devices. Everything works without signing in.',
+                style: TextStyle(color: C.muted, fontSize: 13.5)),
+            const SizedBox(height: 12),
+            const _GoogleButton(),
+          ]),
+        ),
+      ]);
+    }
+    final a = s.account ?? {};
+    final name = '${a['name'] ?? ''}'.trim();
+    final email = '${a['email'] ?? ''}';
+    final pic = '${a['picture'] ?? ''}';
+    final initial = (name.isNotEmpty ? name : (email.isNotEmpty ? email : '?'))[0].toUpperCase();
+    return _group([
+      Padding(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        child: Row(children: [
+          CircleAvatar(
+            radius: 22,
+            backgroundColor: C.accent,
+            foregroundImage: pic.startsWith('https://') ? NetworkImage(pic) : null,
+            child: Text(initial, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(name.isEmpty ? 'Signed in' : name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15.5)),
+              Text(email, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: C.muted, fontSize: 13.5)),
+              const SizedBox(height: 2),
+              const Row(children: [
+                Icon(Icons.cloud_done_rounded, size: 15, color: C.accent),
+                SizedBox(width: 4),
+                Text('Plan and summaries synced', style: TextStyle(color: C.accent, fontSize: 12.5, fontWeight: FontWeight.w600)),
+              ]),
+            ]),
+          ),
+          GhostButton(label: 'Sign out', onPressed: () => _signOut(context)),
+        ]),
+      ),
+      _row('Delete my account', 'Removes your account and every summary saved in it',
+          GhostButton(label: 'Delete', onPressed: () => _deleteAccount(context))),
+    ]);
+  }
+
+  Future<void> _signOut(BuildContext context) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Sign out?'),
+        content: const Text("Your plan and saved summaries stay in your Google account. They'll be removed from this phone until you sign in again."),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Sign out')),
+        ],
+      ),
+    );
+    if (ok == true) await Account.signOut();
+  }
+
+  Future<void> _deleteAccount(BuildContext context) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete your account?'),
+        content: const Text(
+            "This permanently deletes your account, its plan, and every summary saved in it. A Google Play subscription must be canceled in Google Play. This can't be undone."),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          FilledButton(style: FilledButton.styleFrom(backgroundColor: C.bad), onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete account')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    final err = await Account.deleteAccount();
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err ?? 'Your account has been deleted.')));
+    }
+  }
+
   Future<void> _wipe(BuildContext context) async {
     final ok = await showDialog<bool>(
       context: context,
@@ -158,7 +250,11 @@ class ProfileTab extends StatelessWidget {
               ),
             ]),
           ]),
-          _label('ACCOUNT'),
+          if (s.signedIn || s.googleClientId.isNotEmpty) ...[
+            _label('ACCOUNT'),
+            _accountGroup(context, s),
+          ],
+          _label('PLAN & REPORTS'),
           _group([
             _row('Plan', s.plan == 'free' ? '${s.freeLeft} of $freeLimit free reports left' : '${s.planName} · Unlimited reports${s.planUntilText.isNotEmpty ? ' · until ${s.planUntilText}' : ''}',
                 GhostButton(label: s.plan == 'free' ? 'Upgrade' : 'Manage', onPressed: () => openPlans(context))),
@@ -196,7 +292,7 @@ class ProfileTab extends StatelessWidget {
           ]),
           _label('PRIVACY'),
           _group([
-            _row('Save to history', 'Keep summaries on this phone. Photos are never kept.',
+            _row('Save to history', s.signedIn ? 'Summaries are saved to your account. Photos are never kept.' : 'Keep summaries on this phone. Photos are never kept.',
                 Switch(value: s.saveHistory, activeColor: C.accent, onChanged: (v) {
                   s.saveHistory = v;
                   s.save();
@@ -215,4 +311,78 @@ class ProfileTab extends StatelessWidget {
       },
     );
   }
+}
+
+class _GoogleButton extends StatefulWidget {
+  const _GoogleButton();
+  @override
+  State<_GoogleButton> createState() => _GoogleButtonState();
+}
+
+class _GoogleButtonState extends State<_GoogleButton> {
+  bool busy = false;
+
+  Future<void> _go() async {
+    setState(() => busy = true);
+    final err = await Account.signIn();
+    if (!mounted) return;
+    setState(() => busy = false);
+    final msg = err ?? (AppState.I.signedIn ? 'Signed in as ${AppState.I.account?['email'] ?? 'your Google account'}' : null);
+    if (msg != null) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton(
+        onPressed: busy ? null : _go,
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 13),
+          side: const BorderSide(color: C.line, width: 1.4),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(99)),
+          foregroundColor: Colors.black87,
+          backgroundColor: Colors.white,
+        ),
+        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          if (busy)
+            const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+          else
+            const _GLogo(),
+          const SizedBox(width: 10),
+          Text(busy ? 'Signing in…' : 'Sign in with Google', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+        ]),
+      ),
+    );
+  }
+}
+
+/// Google "G" mark drawn with four arcs (official brand colors).
+class _GLogo extends StatelessWidget {
+  const _GLogo();
+  @override
+  Widget build(BuildContext context) => const SizedBox(width: 20, height: 20, child: CustomPaint(painter: _GPainter()));
+}
+
+class _GPainter extends CustomPainter {
+  const _GPainter();
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width * 0.2;
+    final r = Rect.fromLTWH(w / 2, w / 2, size.width - w, size.height - w);
+    Paint p(int c) => Paint()
+      ..color = Color(c)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = w;
+    const d = 3.14159265 / 180;
+    canvas.drawArc(r, -40 * d, -95 * d, false, p(0xFFEA4335)); // red, top
+    canvas.drawArc(r, -135 * d, -90 * d, false, p(0xFFFBBC05)); // yellow, left
+    canvas.drawArc(r, -225 * d, -95 * d, false, p(0xFF34A853)); // green, bottom
+    canvas.drawArc(r, -320 * d, -40 * d, false, p(0xFF4285F4)); // blue, right
+    final y = size.height / 2;
+    canvas.drawLine(Offset(size.width / 2, y), Offset(size.width - w / 2, y), p(0xFF4285F4)..strokeCap = StrokeCap.butt);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

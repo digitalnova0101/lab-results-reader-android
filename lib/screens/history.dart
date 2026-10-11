@@ -14,6 +14,12 @@ class _HistoryTabState extends State<HistoryTab> {
   String q = '';
 
   @override
+  void initState() {
+    super.initState();
+    AppState.I.syncHistory(); // pull summaries saved on other devices
+  }
+
+  @override
   void dispose() {
     _q.dispose();
     super.dispose();
@@ -63,7 +69,11 @@ class _HistoryTabState extends State<HistoryTab> {
           const AppHeader(),
           const SizedBox(height: 14),
           const Text('History', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, letterSpacing: -0.6)),
-          Text(s.saveHistory ? 'Saved privately on this phone' : 'History is off', style: const TextStyle(color: C.muted)),
+          Text(
+              s.signedIn
+                  ? 'Saved to your account · on all your devices'
+                  : (s.saveHistory ? 'Saved privately on this phone' : 'History is off'),
+              style: const TextStyle(color: C.muted)),
           const SizedBox(height: 16),
           if (s.history.isNotEmpty) ...[
             TextField(
