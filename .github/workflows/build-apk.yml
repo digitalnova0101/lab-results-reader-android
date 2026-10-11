@@ -57,7 +57,9 @@ jobs:
           cp build/app/outputs/flutter-apk/app-release.apk LabResultsReader.apk
           flutter build apk --release --split-per-abi 2>&1 | tee -a build.log
           cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk LabResultsReader-arm64.apk
-          ls -la *.apk
+          flutter build appbundle --release 2>&1 | tee -a build.log
+          cp build/app/outputs/bundle/release/app-release.aab LabResultsReader-unsigned.aab
+          ls -la *.apk *.aab
 
       - name: Publish APK (direct download link)
         uses: softprops/action-gh-release@v2
@@ -67,6 +69,7 @@ jobs:
           files: |
             LabResultsReader.apk
             LabResultsReader-arm64.apk
+            LabResultsReader-unsigned.aab
           make_latest: true
 
       - name: Save error logs
