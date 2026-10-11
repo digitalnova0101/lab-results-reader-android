@@ -32,7 +32,7 @@ String summaryText(Map<String, dynamic> d) {
 
 /// Opens the phone's share sheet (WhatsApp, Gmail, Messages…).
 Future<void> shareSummary(Entry e) async {
-  await Share.share(summaryText(e.result), subject: 'My lab report summary: ${e.title}');
+  await SharePlus.instance.share(ShareParams(text: summaryText(e.result), subject: 'My lab report summary: ${e.title}'));
 }
 
 String _fileName(Entry e) {
