@@ -1,0 +1,61 @@
+# Builds the app for web and takes Play Store screenshots of the real UI (demo data).
+name: Store screenshots
+
+on:
+  push:
+    branches: [main]
+    paths: ['ci/shots/**', 'lib/shots.dart', '.github/workflows/screenshots.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  shots:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Build web version
+        shell: bash
+        run: |
+          set -o pipefail
+          flutter create --no-pub --platforms=web --org com.labresultsreader --project-name app . 2>&1 | tee build.log
+          rm -rf test
+          flutter pub get 2>&1 | tee -a build.log
+          flutter build web --release --no-web-resources-cdn 2>&1 | tee -a build.log
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Take screenshots
+        shell: bash
+        run: |
+          set -o pipefail
+          cd ci/shots
+          npm init -y >/dev/null
+          npm i playwright@1.47.2 2>&1 | tail -2
+          npx playwright install --with-deps chromium 2>&1 | tail -2
+          (cd ../../build/web && python3 -m http.server 8080 >/dev/null 2>&1 &)
+          sleep 2
+          node shoot.mjs 2>&1 | tee -a ../../build.log
+          cd shots && zip -q ../../../store-screenshots.zip *.png
+      - name: Publish screenshots
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: store-shots-${{ github.run_number }}
+          name: Store screenshots ${{ github.run_number }}
+          prerelease: true
+          make_latest: false
+          files: store-screenshots.zip
+      - name: Upload log on failure
+        if: failure()
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: shots-log-${{ github.run_number }}
+          name: Screenshot log ${{ github.run_number }}
+          prerelease: true
+          make_latest: false
+          files: build.log

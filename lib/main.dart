@@ -6,6 +6,7 @@ import 'screens/history.dart';
 import 'screens/home.dart';
 import 'screens/legal.dart';
 import 'screens/profile.dart';
+import 'shots.dart';
 import 'speak.dart';
 import 'state.dart';
 import 'theme.dart';
@@ -19,7 +20,9 @@ Future<void> main() async {
     systemNavigationBarIconBrightness: Brightness.dark,
   ));
   await AppState.I.load();
+  applyShotMode(); // web store screenshots only
   runApp(const LabResultsReaderApp());
+  if (shotMode) return;
   AppState.I.syncStatus().then((_) => AppState.I.syncHistory()); // plan, free reports left, synced summaries
   Billing.I.init(); // finishes any Google Play purchase that was still pending
 }
@@ -30,6 +33,7 @@ class LabResultsReaderApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: shotNavKey,
       title: 'Lab Results Reader',
       debugShowCheckedModeBanner: false,
       theme: buildTheme(),

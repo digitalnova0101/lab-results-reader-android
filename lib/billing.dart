@@ -13,7 +13,7 @@ class Billing {
   Billing._();
   static final Billing I = Billing._();
 
-  final InAppPurchase _iap = InAppPurchase.instance;
+  InAppPurchase get _iap => InAppPurchase.instance;
   StreamSubscription<List<PurchaseDetails>>? _sub;
   final Map<String, ProductDetails> products = {}; // keyed by plan ('plus' / 'family')
   bool available = false;

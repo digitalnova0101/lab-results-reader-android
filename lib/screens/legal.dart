@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../api.dart';
 import '../billing.dart';
+import '../shots.dart' show shotMode;
 import '../state.dart';
 import '../theme.dart';
 
@@ -279,7 +280,7 @@ class _PlansScreenState extends State<PlansScreen> {
                 child: const Text('Restore purchases'),
               ),
             ]),
-            if (!storeReady)
+            if (!storeReady && !shotMode)
               const Padding(
                 padding: EdgeInsets.only(top: 4),
                 child: Text('Google Play subscriptions are launching soon.', textAlign: TextAlign.center, style: TextStyle(color: C.muted, fontSize: 12.5)),
