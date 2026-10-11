@@ -23,12 +23,17 @@ const Map<String, String> errorCopy = {
   'network': "Couldn't reach the server. Check your internet connection and try again.",
   'timeout': 'The server took too long to answer. Please try again with fewer pages.',
   'empty': "The AI didn't return an answer. Please try again.",
+  'limit_reached': "You've used all your free reports. Choose a plan or redeem a code to keep going.",
+  'bad_code': "That code isn't valid.",
+  'purchase_invalid': "We couldn't confirm this purchase with Google Play.",
 };
 
 String errorText(ApiError e) =>
     errorCopy[e.code] ?? 'Something went wrong. Please try again. (${e.code}${e.detail.isNotEmpty ? ': ${e.detail}' : ''})';
 
 class Api {
+  /// Anonymous id for this phone, so the server can count free reports (set at startup).
+  static String device = '';
   static http.Client? _client;
   static bool _cancelled = false;
 
@@ -43,7 +48,7 @@ class Api {
     _client = c;
     try {
       final res = await c
-          .post(Uri.parse(apiUrl), headers: {'Content-Type': 'application/json'}, body: jsonEncode(body))
+          .post(Uri.parse(apiUrl), headers: {'Content-Type': 'application/json'}, body: jsonEncode({...body, 'device': device, 'platform': 'android'}))
           .timeout(const Duration(seconds: 200));
       Map<String, dynamic>? data;
       try {

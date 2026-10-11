@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../api.dart';
+import '../billing.dart';
+import '../state.dart';
 import '../theme.dart';
 
 const String legalUpdated = 'October 10, 2026';
@@ -11,7 +14,7 @@ const _legal = {
       ('Who we are',
           'Lab Results Reader ("the app", "we", "us") is operated by Moezza Digital. If you have any question about your privacy, contact us at privacy@moezzadigital.com.'),
       ('What we collect',
-          'We collect only what is needed to explain your report: the photos or PDF pages you choose to upload, the questions you ask in the follow-up chat, and basic technical information such as your IP address and the time of each request. You do not need an account, and we do not ask for your name, email address, or phone number.'),
+          'We collect only what is needed to explain your report: the photos or PDF pages you choose to upload, the questions you ask in the follow-up chat, and basic technical information such as your IP address, the time of each request, and an anonymous app ID for this phone (used only to count free reports and to keep your paid plan active). If you subscribe, Google Play shares a purchase token with us so we can confirm your plan; we never see your card details. You do not need an account, and we do not ask for your name, email address, or phone number.'),
       ('How we use it',
           'We use your uploads and questions only to create your explanation and answer your questions. We use technical information only to keep the service secure and to prevent abuse. We never sell your data, never use it for advertising, and never use it to build a profile about you.'),
       ('AI processing',
@@ -88,8 +91,78 @@ class PlansScreen extends StatefulWidget {
   State<PlansScreen> createState() => _PlansScreenState();
 }
 
+/// "Have a code?" — gives a paid plan for free (codes are set in REDEEM_CODES in config.php).
+Future<void> redeemDialog(BuildContext context) async {
+  final ctrl = TextEditingController();
+  String? err;
+  bool busy = false;
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, set) => AlertDialog(
+        title: const Text('Redeem a code'),
+        content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Text('Enter the code you were given to unlock a plan.', style: TextStyle(color: C.muted)),
+          const SizedBox(height: 12),
+          TextField(
+            controller: ctrl,
+            autofocus: true,
+            textCapitalization: TextCapitalization.characters,
+            decoration: InputDecoration(hintText: 'e.g. FRIEND2026', errorText: err, border: const OutlineInputBorder()),
+          ),
+        ]),
+        actions: [
+          TextButton(onPressed: busy ? null : () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          FilledButton(
+            onPressed: busy
+                ? null
+                : () async {
+                    final code = ctrl.text.trim();
+                    if (code.isEmpty) return;
+                    set(() {
+                      busy = true;
+                      err = null;
+                    });
+                    try {
+                      final d = await Api.post({'action': 'redeem', 'code': code});
+                      AppState.I.applyStatus(d['status']);
+                      if (ctx.mounted) Navigator.pop(ctx, true);
+                    } on ApiError catch (e) {
+                      set(() {
+                        busy = false;
+                        err = e.code == 'bad_code' && e.detail.isNotEmpty ? e.detail : errorText(e);
+                      });
+                    }
+                  },
+            child: Text(busy ? 'Checking…' : 'Redeem'),
+          ),
+        ],
+      ),
+    ),
+  );
+  if (ok == true && context.mounted) {
+    final s = AppState.I;
+    final until = s.planUntilText;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('You now have the ${s.planName} plan${until.isNotEmpty ? ' until $until' : ''}.'),
+    ));
+  }
+}
+
 class _PlansScreenState extends State<PlansScreen> {
   String chosen = 'plus';
+  bool storeReady = false;
+
+  @override
+  void initState() {
+    super.initState();
+    Billing.I.message.value = null;
+    Billing.I.loadProducts().then((ok) {
+      if (mounted) setState(() => storeReady = ok);
+    });
+  }
+
+  String _price(String plan, String fallback) => Billing.I.products[plan]?.price ?? fallback;
 
   Widget _plan(String id, String name, String price, List<String> perks, {bool best = false}) {
     final on = chosen == id;
@@ -137,24 +210,82 @@ class _PlansScreenState extends State<PlansScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(backgroundColor: C.bg, surfaceTintColor: C.bg),
-      body: ListView(padding: const EdgeInsets.fromLTRB(20, 0, 20, 32), children: [
-        Text(widget.title, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800, letterSpacing: -0.6)),
-        const SizedBox(height: 4),
-        const Text('Cancel anytime. You will see the price in your local currency before you pay.', style: TextStyle(color: C.muted)),
-        const SizedBox(height: 18),
-        _plan('plus', 'Plus', '\$4.99', ['Unlimited reports', 'Follow-up questions', '2 family profiles'], best: true),
-        const SizedBox(height: 12),
-        _plan('family', 'Family', '\$9.99', ['Everything in Plus', 'Up to 6 family profiles', 'History for each person']),
-        const SizedBox(height: 18),
-        PrimaryButton(
-          label: 'Start 7-day free trial',
-          onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Paid plans are coming soon. We'll let you know when they're available.")),
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Not now', style: TextStyle(color: C.muted))),
-      ]),
+      body: ListenableBuilder(
+        listenable: Listenable.merge([AppState.I, Billing.I.message, Billing.I.busy]),
+        builder: (context, _) {
+          final s = AppState.I;
+          final msg = Billing.I.message.value;
+          final busy = Billing.I.busy.value;
+          final paid = s.plan != 'free';
+          return ListView(padding: const EdgeInsets.fromLTRB(20, 0, 20, 32), children: [
+            Text(paid ? 'Your plan' : widget.title, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800, letterSpacing: -0.6)),
+            const SizedBox(height: 4),
+            const Text('Cancel anytime in Google Play. You will see the price in your local currency before you pay.', style: TextStyle(color: C.muted)),
+            if (paid) ...[
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(color: C.accentSoft, borderRadius: BorderRadius.circular(14)),
+                child: Row(children: [
+                  const Icon(Icons.verified_rounded, color: C.accent),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      '${s.planName} plan is active${s.planUntilText.isNotEmpty ? ' until ${s.planUntilText}' : ''}${s.planSource == 'code' ? ' (code)' : ''}.',
+                      style: const TextStyle(color: C.accent, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ]),
+              ),
+            ],
+            if (msg != null) ...[
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(color: C.surface, borderRadius: BorderRadius.circular(14), border: Border.all(color: C.line)),
+                child: Text(msg, style: const TextStyle(height: 1.45)),
+              ),
+            ],
+            const SizedBox(height: 18),
+            _plan('plus', 'Plus', _price('plus', '\$4.99'), ['Unlimited reports', 'Follow-up questions', '2 family profiles'], best: true),
+            const SizedBox(height: 12),
+            _plan('family', 'Family', _price('family', '\$9.99'), ['Everything in Plus', 'Up to 6 family profiles', 'History for each person']),
+            const SizedBox(height: 18),
+            PrimaryButton(
+              label: busy ? 'Please wait…' : (s.plan == chosen ? 'Current plan' : 'Subscribe with Google Play'),
+              onPressed: busy || s.plan == chosen
+                  ? null
+                  : () async {
+                      final err = await Billing.I.buy(chosen);
+                      if (err != null && context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+                      }
+                    },
+            ),
+            const SizedBox(height: 10),
+            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              TextButton.icon(
+                onPressed: () => redeemDialog(context),
+                icon: const Icon(Icons.card_giftcard_rounded, size: 18),
+                label: const Text('Have a code?'),
+                style: TextButton.styleFrom(foregroundColor: C.accent),
+              ),
+              const Text('·', style: TextStyle(color: C.muted)),
+              TextButton(
+                onPressed: busy ? null : () => Billing.I.restore(),
+                style: TextButton.styleFrom(foregroundColor: C.accent),
+                child: const Text('Restore purchases'),
+              ),
+            ]),
+            if (!storeReady)
+              const Padding(
+                padding: EdgeInsets.only(top: 4),
+                child: Text('Google Play subscriptions are launching soon.', textAlign: TextAlign.center, style: TextStyle(color: C.muted, fontSize: 12.5)),
+              ),
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Not now', style: TextStyle(color: C.muted))),
+          ]);
+        },
+      ),
     );
   }
 }

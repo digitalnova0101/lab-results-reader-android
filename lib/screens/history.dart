@@ -3,8 +3,35 @@ import 'package:flutter/material.dart';
 import '../state.dart';
 import '../theme.dart';
 
-class HistoryTab extends StatelessWidget {
+class HistoryTab extends StatefulWidget {
   const HistoryTab({super.key});
+  @override
+  State<HistoryTab> createState() => _HistoryTabState();
+}
+
+class _HistoryTabState extends State<HistoryTab> {
+  final _q = TextEditingController();
+  String q = '';
+
+  @override
+  void dispose() {
+    _q.dispose();
+    super.dispose();
+  }
+
+  /// Matches the report title, the person, the date, the overall result, or any test name.
+  bool _match(Entry e, AppState s) {
+    if (q.isEmpty) return true;
+    final b = StringBuffer('${e.title} ${s.profName(e.profileId)} ${fmtDate(e.createdAt)} ${labelOf[norm(e.result['overall'])]} ');
+    for (final r in (e.result['reports'] as List? ?? []).whereType<Map>()) {
+      b.write('${r['title']} ');
+      for (final it in (r['items'] as List? ?? []).whereType<Map>()) {
+        b.write('${it['name']} ');
+      }
+    }
+    final hay = b.toString().toLowerCase();
+    return q.toLowerCase().split(RegExp(r'\s+')).where((w) => w.isNotEmpty).every(hay.contains);
+  }
 
   Future<void> _confirmDelete(BuildContext context, Entry e) async {
     final ok = await showDialog<bool>(
@@ -31,12 +58,45 @@ class HistoryTab extends StatelessWidget {
       listenable: AppState.I,
       builder: (context, _) {
         final s = AppState.I;
+        final list = s.history.where((e) => _match(e, s)).toList();
         return ListView(padding: const EdgeInsets.fromLTRB(20, 4, 20, 28), children: [
           const AppHeader(),
           const SizedBox(height: 14),
           const Text('History', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, letterSpacing: -0.6)),
           Text(s.saveHistory ? 'Saved privately on this phone' : 'History is off', style: const TextStyle(color: C.muted)),
           const SizedBox(height: 16),
+          if (s.history.isNotEmpty) ...[
+            TextField(
+              controller: _q,
+              onChanged: (v) => setState(() => q = v.trim()),
+              textInputAction: TextInputAction.search,
+              decoration: InputDecoration(
+                hintText: 'Search reports, tests or names',
+                prefixIcon: const Icon(Icons.search_rounded, color: C.muted),
+                suffixIcon: q.isEmpty
+                    ? null
+                    : IconButton(
+                        icon: const Icon(Icons.close_rounded, color: C.muted),
+                        onPressed: () => setState(() {
+                          _q.clear();
+                          q = '';
+                        }),
+                      ),
+                filled: true,
+                fillColor: C.surface,
+                contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: C.line)),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: C.line)),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: C.accent, width: 1.5)),
+              ),
+            ),
+            const SizedBox(height: 12),
+            if (list.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Text('No reports match "$q"', textAlign: TextAlign.center, style: const TextStyle(color: C.muted)),
+              ),
+          ],
           if (s.history.isEmpty)
             Container(
               padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
@@ -60,7 +120,7 @@ class HistoryTab extends StatelessWidget {
               ]),
             )
           else
-            for (final e in s.history)
+            for (final e in list)
               Padding(
                 padding: const EdgeInsets.only(bottom: 10),
                 child: Material(

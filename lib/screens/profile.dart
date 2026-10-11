@@ -160,8 +160,9 @@ class ProfileTab extends StatelessWidget {
           ]),
           _label('ACCOUNT'),
           _group([
-            _row('Plan', s.plan == 'free' ? '${s.freeLeft} of $freeLimit free reports left' : 'Unlimited reports',
-                GhostButton(label: 'Upgrade', onPressed: () => openPlans(context))),
+            _row('Plan', s.plan == 'free' ? '${s.freeLeft} of $freeLimit free reports left' : '${s.planName} · Unlimited reports${s.planUntilText.isNotEmpty ? ' · until ${s.planUntilText}' : ''}',
+                GhostButton(label: s.plan == 'free' ? 'Upgrade' : 'Manage', onPressed: () => openPlans(context))),
+            _row('Have a code?', 'Redeem a gift or promo code', GhostButton(label: 'Redeem', onPressed: () => redeemDialog(context))),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 14),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

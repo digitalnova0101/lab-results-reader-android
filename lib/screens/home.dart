@@ -173,7 +173,7 @@ class _HomeTabState extends State<HomeTab> {
   Future<void> _explain() async {
     if (_pages.isEmpty) return;
     if (!s.canExplain) {
-      openPlans(context, title: "You've used your 3 free reports");
+      openPlans(context, title: "You've used your $freeLimit free reports");
       return;
     }
     setState(() {
@@ -186,8 +186,12 @@ class _HomeTabState extends State<HomeTab> {
       final files = _pages.map((p) => {'mime': p.mime, 'data': base64Encode(p.bytes)}).toList();
       final data = await Api.post({'action': 'explain', 'lang': s.lang, 'files': files});
       final result = Map<String, dynamic>.from(data['result'] as Map);
-      s.used += 1;
-      s.save();
+      if (data['status'] != null) {
+        s.applyStatus(data['status']);
+      } else {
+        s.used += 1;
+        s.save();
+      }
       final e = Entry(
         id: 'r${DateTime.now().millisecondsSinceEpoch}',
         createdAt: DateTime.now().millisecondsSinceEpoch,
@@ -200,7 +204,12 @@ class _HomeTabState extends State<HomeTab> {
       s.upsertEntry(e);
       s.openEntry(e);
     } on ApiError catch (e) {
-      if (e.code != 'cancelled') _error = errorText(e);
+      if (e.code == 'limit_reached') {
+        s.syncStatus();
+        if (mounted) openPlans(context, title: "You've used your free reports");
+      } else if (e.code != 'cancelled') {
+        _error = errorText(e);
+      }
     } catch (_) {
       _error = 'Something went wrong. Please try again.';
     } finally {

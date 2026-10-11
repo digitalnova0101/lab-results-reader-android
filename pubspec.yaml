@@ -1,7 +1,7 @@
 name: app
 description: Lab Results Reader — upload a lab report and get it explained in plain English.
 publish_to: none
-version: 2.3.0+23
+version: 2.4.0+24
 
 environment:
   sdk: ">=3.4.0 <4.0.0"
@@ -15,6 +15,11 @@ dependencies:
   shared_preferences: any
   google_fonts: ">=6.2.1 <7.0.0"
   audioplayers: any
+  pdf: ">=3.11.0 <4.0.0"
+  printing: ">=5.13.0 <6.0.0"
+  share_plus: ">=10.1.0 <11.0.0"
+  in_app_purchase: ">=3.2.0 <4.0.0"
+  android_id: ">=0.4.0 <0.5.0"
 
 dev_dependencies:
   flutter_launcher_icons: any

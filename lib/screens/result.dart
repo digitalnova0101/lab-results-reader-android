@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../api.dart';
+import '../export.dart';
 import '../state.dart';
 import '../speak.dart';
 import '../theme.dart';
@@ -94,13 +95,7 @@ class ResultView extends StatelessWidget {
         ),
         const Spacer(),
         if (!isSample)
-          GhostButton(
-            label: 'Copy',
-            onPressed: () {
-              Clipboard.setData(ClipboardData(text: _toText(r)));
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Summary copied')));
-            },
-          )
+          GhostButton(label: 'Share', icon: Icons.ios_share_rounded, onPressed: () => _shareSheet(context))
         else
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -216,25 +211,58 @@ class ResultView extends StatelessWidget {
     ]);
   }
 
-  static String _toText(Map<String, dynamic> d) {
-    final b = StringBuffer('${d['title'] ?? 'Report'}\n\n${d['summary'] ?? ''}\n');
-    if ('${d['urgent'] ?? ''}'.isNotEmpty) b.write('\n⚠ ${d['urgent']}\n');
-    for (final r in (d['reports'] as List? ?? []).whereType<Map>()) {
-      b.write('\n${r['title']}: ${r['summary'] ?? ''}\n');
-      for (final i in (r['items'] as List? ?? []).whereType<Map>()) {
-        b.write('- ${i['name']}: ${i['value']}${i['range'] != null ? ' (normal ${i['range']})' : ''} — ${i['meaning'] ?? ''}\n');
+  Future<void> _shareSheet(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    Future<void> run(Future<void> Function() f, String fail) async {
+      try {
+        await f();
+      } catch (_) {
+        messenger.showSnackBar(SnackBar(content: Text(fail)));
       }
     }
-    final q = (d['questions'] as List? ?? []);
-    if (q.isNotEmpty) {
-      b.write('\nQuestions for my doctor:\n');
-      for (var i = 0; i < q.length; i++) {
-        b.write('${i + 1}. ${q[i]}\n');
-      }
-    }
-    b.write('\n(Explained by Lab Results Reader — for education only.)');
-    return b.toString();
+
+    Widget tile(BuildContext ctx, IconData icon, String title, String sub, Future<void> Function() action) => ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(color: C.accentSoft, borderRadius: BorderRadius.circular(12)),
+            child: Icon(icon, color: C.accent),
+          ),
+          title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+          subtitle: Text(sub, style: const TextStyle(color: C.muted, fontSize: 13)),
+          onTap: () {
+            Navigator.pop(ctx);
+            action();
+          },
+        );
+
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: C.surface,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Text('Share or save', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 8),
+            tile(ctx, Icons.chat_rounded, 'Share summary', 'WhatsApp, email, messages…',
+                () => run(() => shareSummary(entry), "Couldn't open sharing.")),
+            tile(ctx, Icons.picture_as_pdf_rounded, 'Save as PDF', 'A clean copy to print or keep',
+                () => run(() => savePdf(entry), "Couldn't create the PDF. Please try again.")),
+            tile(ctx, Icons.send_rounded, 'Share PDF', 'Send the PDF to your doctor or family',
+                () => run(() => sharePdf(entry), "Couldn't create the PDF. Please try again.")),
+            tile(ctx, Icons.copy_rounded, 'Copy text', 'Paste it anywhere', () async {
+              await Clipboard.setData(ClipboardData(text: summaryText(entry.result)));
+              messenger.showSnackBar(const SnackBar(content: Text('Summary copied')));
+            }),
+          ]),
+        ),
+      ),
+    );
   }
+
 }
 
 /* ---------- summary ring ---------- */

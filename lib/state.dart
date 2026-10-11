@@ -1,10 +1,16 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'dart:math';
+
+import 'package:android_id/android_id.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-const int freeLimit = 3; // free reports per phone (set 999 while testing)
-const String appVersion = '2.3';
+import 'api.dart';
+
+/// Free reports per phone. The real number comes from the server (FREE_REPORTS in config.php).
+int get freeLimit => AppState.I.limit;
+const String appVersion = '2.4';
 
 const List<List<String>> langs = [
   ['English', 'English'],
@@ -84,6 +90,9 @@ class AppState extends ChangeNotifier {
   String lang = 'English';
   String plan = 'free';
   int used = 0;
+  int limit = 3;
+  int planUntil = 0; // seconds
+  String planSource = ''; // 'play' or 'code'
   List<Profile> profiles = [Profile('me', 'Me')];
   String active = 'me';
   List<Entry> history = [];
@@ -103,6 +112,9 @@ class AppState extends ChangeNotifier {
       lang = '${s['lang'] ?? 'English'}';
       plan = '${s['plan'] ?? 'free'}';
       used = (s['used'] as num?)?.toInt() ?? 0;
+      limit = (s['limit'] as num?)?.toInt() ?? 3;
+      planUntil = (s['planUntil'] as num?)?.toInt() ?? 0;
+      planSource = '${s['planSource'] ?? ''}';
       final ps = (s['profiles'] as List?)?.map((e) => Profile.fromJson(Map<String, dynamic>.from(e as Map))).toList();
       if (ps != null && ps.isNotEmpty) profiles = ps;
       active = '${s['active'] ?? 'me'}';
@@ -114,7 +126,52 @@ class AppState extends ChangeNotifier {
     } catch (_) {
       history = [];
     }
+    await _initDevice();
     notifyListeners();
+  }
+
+  /// A stable anonymous id: Android ID (survives reinstall), else a random id kept on the phone.
+  Future<void> _initDevice() async {
+    String id = '';
+    try {
+      id = (await const AndroidId().getId()) ?? '';
+    } catch (_) {}
+    if (id.isEmpty) {
+      id = _p!.getString('device_id') ?? '';
+      if (id.isEmpty) {
+        final r = Random.secure();
+        id = List.generate(24, (_) => r.nextInt(16).toRadixString(16)).join();
+        await _p!.setString('device_id', id);
+      }
+    } else {
+      id = 'a-$id';
+    }
+    Api.device = id;
+  }
+
+  /// Applies the plan/usage the server sent back.
+  void applyStatus(dynamic st) {
+    if (st is! Map) return;
+    plan = '${st['plan'] ?? 'free'}';
+    used = (st['used'] as num?)?.toInt() ?? used;
+    limit = (st['free_limit'] as num?)?.toInt() ?? limit;
+    planUntil = (st['plan_until'] as num?)?.toInt() ?? 0;
+    planSource = '${st['plan_source'] ?? ''}';
+    save();
+  }
+
+  /// Asks the server for this phone's plan and free reports left.
+  Future<void> syncStatus() async {
+    try {
+      final d = await Api.post({'action': 'status'});
+      applyStatus(d['status']);
+    } catch (_) {}
+  }
+
+  String get planName => plan == 'family' ? 'Family' : (plan == 'plus' ? 'Plus' : 'Free');
+  String get planUntilText {
+    if (plan == 'free' || planUntil <= 0 || planUntil > 3000000000) return '';
+    return fmtDate(planUntil * 1000);
   }
 
   void save() {
@@ -128,6 +185,9 @@ class AppState extends ChangeNotifier {
           'lang': lang,
           'plan': plan,
           'used': used,
+          'limit': limit,
+          'planUntil': planUntil,
+          'planSource': planSource,
           'profiles': profiles.map((p) => p.toJson()).toList(),
           'active': active,
         }));
@@ -171,20 +231,21 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> wipe() async {
+    final dev = _p?.getString('device_id');
     await _p?.clear();
+    if (dev != null) await _p?.setString('device_id', dev);
     introSeen = false;
     langChosen = false;
     consent = false;
     saveHistory = false;
     lang = 'English';
-    plan = 'free';
-    used = 0;
     profiles = [Profile('me', 'Me')];
     active = 'me';
     history = [];
     current = null;
     tab = 0;
     notifyListeners();
+    syncStatus();
   }
 
   void touch() => notifyListeners();

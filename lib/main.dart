@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'billing.dart';
 import 'screens/history.dart';
 import 'screens/home.dart';
 import 'screens/legal.dart';
@@ -19,6 +20,8 @@ Future<void> main() async {
   ));
   await AppState.I.load();
   runApp(const LabResultsReaderApp());
+  AppState.I.syncStatus(); // plan + free reports left, from the server
+  Billing.I.init(); // finishes any Google Play purchase that was still pending
 }
 
 class LabResultsReaderApp extends StatelessWidget {
