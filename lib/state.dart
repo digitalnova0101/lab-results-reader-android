@@ -11,7 +11,7 @@ import 'api.dart';
 
 /// Free reports per phone. The real number comes from the server (FREE_REPORTS in config.php).
 int get freeLimit => AppState.I.limit;
-const String appVersion = '2.5';
+const String appVersion = '2.5.1';
 
 const List<List<String>> langs = [
   ['English', 'English'],

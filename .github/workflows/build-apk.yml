@@ -60,6 +60,10 @@ jobs:
           flutter build appbundle --release 2>&1 | tee -a build.log
           cp build/app/outputs/bundle/release/app-release.aab LabResultsReader-unsigned.aab
           ls -la *.apk *.aab
+          # The APK must be signed with the fixed key (Google Sign-in + updates depend on it).
+          SIGNER=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)/apksigner
+          $SIGNER verify --print-certs LabResultsReader-arm64.apk | tee -a build.log
+          $SIGNER verify --print-certs LabResultsReader-arm64.apk | grep -qi "066ecf223f146978c8dad997e39b78f21942d10b" || { echo "WRONG SIGNING KEY" | tee -a build.log; exit 1; }
 
       - name: Publish APK (direct download link)
         uses: softprops/action-gh-release@v2

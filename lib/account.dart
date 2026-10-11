@@ -36,8 +36,11 @@ class Account {
       await s.syncHistory();
       return null;
     } on GoogleSignInException catch (e) {
-      if (e.code == GoogleSignInExceptionCode.canceled) return null;
-      return "Google sign-in didn't work on this phone. Please try again. (${e.code.name})";
+      final why = (e.description ?? '').trim();
+      if (e.code == GoogleSignInExceptionCode.canceled && (why.isEmpty || why.toLowerCase().contains('cancelled by the user'))) {
+        return 'Sign-in was canceled.';
+      }
+      return "Google sign-in didn't work. Please try again. (${e.code.name}${why.isNotEmpty ? ': $why' : ''})";
     } on ApiError catch (e) {
       return errorText(e);
     } catch (e) {

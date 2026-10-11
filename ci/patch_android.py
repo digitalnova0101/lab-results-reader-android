@@ -14,3 +14,41 @@ if "TTS_SERVICE" not in s:
 </manifest>""")
 m.write_text(s)
 print(s[:600])
+
+# Always sign the APK with the fixed key in keys/debug.keystore (SHA-1 06:6E:CF:22:...),
+# so updates install over the old app and Google Sign-in matches the SHA-1 in Google Cloud.
+g = pathlib.Path("android/app/build.gradle.kts")
+if g.exists():
+    t = g.read_text()
+    if 'create("fixed")' not in t:
+        t = t.replace("    buildTypes {", """    signingConfigs {
+        create("fixed") {
+            storeFile = file("../../keys/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
+    buildTypes {""", 1)
+        t = re.sub(r'signingConfig\s*=\s*signingConfigs\.getByName\("debug"\)', 'signingConfig = signingConfigs.getByName("fixed")', t)
+        assert 'getByName("fixed")' in t, "could not set signing config"
+    g.write_text(t)
+else:
+    g = pathlib.Path("android/app/build.gradle")
+    t = g.read_text()
+    if "fixed {" not in t:
+        t = t.replace("    buildTypes {", """    signingConfigs {
+        fixed {
+            storeFile file("../../keys/debug.keystore")
+            storePassword "android"
+            keyAlias "androiddebugkey"
+            keyPassword "android"
+        }
+    }
+
+    buildTypes {""", 1)
+        t = re.sub(r'signingConfig\s+signingConfigs\.debug', 'signingConfig signingConfigs.fixed', t)
+        assert "signingConfigs.fixed" in t, "could not set signing config"
+    g.write_text(t)
+print("signing: fixed key")
