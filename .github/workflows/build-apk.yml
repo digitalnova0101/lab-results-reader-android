@@ -35,7 +35,10 @@ jobs:
           python3 ci/patch_android.py
 
       - name: Get packages
-        run: flutter pub get
+        shell: bash
+        run: |
+          set -o pipefail
+          flutter pub get 2>&1 | tee pub.log
 
       - name: App icon
         run: dart run flutter_launcher_icons
@@ -68,7 +71,8 @@ jobs:
 
       - name: Save error logs
         if: failure()
-        run: touch analyze.log build.log
+        run: |
+          for f in pub.log analyze.log build.log; do [ -s $f ] || echo "(empty)" > $f; done
 
       - name: Upload error logs
         if: failure()
@@ -79,5 +83,6 @@ jobs:
           prerelease: true
           make_latest: false
           files: |
+            pub.log
             analyze.log
             build.log
