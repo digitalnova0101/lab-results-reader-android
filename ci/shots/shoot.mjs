@@ -18,7 +18,7 @@ const status = { status: { plan: 'free', plan_until: 0, plan_source: '', used: 1
 
 const shots = [
   ['intro', 390, 844], ['lang', 390, 844], ['home', 390, 844], ['result', 390, 3400],
-  ['learn', 390, 844], ['history', 390, 844], ['profile', 390, 844], ['plans', 390, 844],
+  ['learn', 390, 844], ['listen', 390, 844], ['share', 390, 844], ['history', 390, 844], ['profile', 390, 844], ['plans', 390, 844],
 ];
 
 const browser = await chromium.launch();
@@ -39,7 +39,7 @@ for (const [name, w, h] of shots) {
   page.on('pageerror', e => console.log(name, 'pageerror:', e.message));
   await page.goto(`${BASE}?shot=${name}`);
   await page.waitForSelector('flutter-view, flt-glass-pane', { timeout: 60000 });
-  await page.waitForTimeout(name === 'learn' || name === 'plans' ? 6000 : 4500);
+  await page.waitForTimeout(name === 'learn' || name === 'plans' || name === 'share' ? 6000 : 4500);
   await page.screenshot({ path: `${OUT}/${name}.png` });
   console.log('saved', name);
   await ctx.close();

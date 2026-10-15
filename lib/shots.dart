@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'screens/learn.dart';
+import 'screens/result.dart';
+import 'speak.dart';
 import 'screens/legal.dart';
 import 'state.dart';
 
@@ -38,7 +40,8 @@ void applyShotMode() {
   ];
   s.plan = shot == 'profile' ? 'free' : 'family';
   s.tab = switch (shot) { 'history' => 1, 'profile' => 2, _ => 0 };
-  s.current = (shot == 'result' || shot == 'learn') ? main : null;
+  s.current = const {'result', 'learn', 'listen', 'share'}.contains(shot) ? main : null;
+  if (shot == 'listen') speakingId.value = main.id;
   s.touch();
   WidgetsBinding.instance.addPostFrameCallback((_) {
     Future.delayed(const Duration(milliseconds: 600), () {
@@ -46,6 +49,7 @@ void applyShotMode() {
       if (ctx == null) return;
       if (shot == 'learn') showLearnSheet(ctx, 'LDL cholesterol ("bad")', 'English');
       if (shot == 'plans') openPlans(ctx, title: 'Unlimited reports for your family');
+      if (shot == 'share') ResultView.openShare(ctx, main);
     });
   });
 }

@@ -211,6 +211,9 @@ class ResultView extends StatelessWidget {
     ]);
   }
 
+  /// Opens the Share / Save as PDF sheet for any report.
+  static Future<void> openShare(BuildContext context, Entry e) => ResultView(entry: e, onNew: () {})._shareSheet(context);
+
   Future<void> _shareSheet(BuildContext context) async {
     final messenger = ScaffoldMessenger.of(context);
     Future<void> run(Future<void> Function() f, String fail) async {
