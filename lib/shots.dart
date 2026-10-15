@@ -38,7 +38,7 @@ void applyShotMode() {
     _brief('r4', 'Hemoglobin A1c', 'ok', 'me', now - 41 * day),
     _brief('r5', 'Urinalysis', 'ok', 'mom', now - 70 * day),
   ];
-  s.plan = shot == 'profile' ? 'free' : 'family';
+  s.plan = (shot == 'profile' || shot == 'plans') ? 'free' : 'family';
   s.tab = switch (shot) { 'history' => 1, 'profile' => 2, _ => 0 };
   s.current = const {'result', 'learn', 'listen', 'share'}.contains(shot) ? main : null;
   if (shot == 'listen') speakingId.value = main.id;
