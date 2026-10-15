@@ -52,3 +52,27 @@ else:
         assert "signingConfigs.fixed" in t, "could not set signing config"
     g.write_text(t)
 print("signing: fixed key")
+# Fix package name for Google Play Console
+g = pathlib.Path("android/app/build.gradle.kts")
+
+if g.exists():
+    t = g.read_text()
+    t = re.sub(
+        r'applicationId\s*=\s*"[^"]+"',
+        'applicationId = "labresultsreader.com"',
+        t
+    )
+    assert 'applicationId = "labresultsreader.com"' in t
+    g.write_text(t)
+else:
+    g = pathlib.Path("android/app/build.gradle")
+    t = g.read_text()
+    t = re.sub(
+        r'applicationId\s+["\'][^"\']+["\']',
+        'applicationId "labresultsreader.com"',
+        t
+    )
+    assert 'applicationId "labresultsreader.com"' in t
+    g.write_text(t)
+
+print("Package name: labresultsreader.com")
