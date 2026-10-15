@@ -59,6 +59,8 @@ jobs:
           cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk LabResultsReader-arm64.apk
           flutter build appbundle --release 2>&1 | tee -a build.log
           cp build/app/outputs/bundle/release/app-release.aab LabResultsReader-unsigned.aab
+          flutter build appbundle --release --target-platform android-arm64 2>&1 | tee -a build.log
+          cp build/app/outputs/bundle/release/app-release.aab LabResultsReader-arm64-unsigned.aab
           ls -la *.apk *.aab
           # The APK must be signed with the fixed key (Google Sign-in + updates depend on it).
           SIGNER=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)/apksigner
@@ -74,6 +76,7 @@ jobs:
             LabResultsReader.apk
             LabResultsReader-arm64.apk
             LabResultsReader-unsigned.aab
+            LabResultsReader-arm64-unsigned.aab
           make_latest: true
 
       - name: Save error logs
