@@ -1,5 +1,5 @@
 # Play Store builds
 
-Signed App Bundles (.aab) for Google Play Console. Upload the newest one.
+Signed App Bundle (.aab) for Google Play Console.
 
-- LabResultsReader-v2.5.0-25.aab — version 2.5.0 (25)
+- LabResultsReader-v2.5.1-26.aab - version 2.5.1 (26)
